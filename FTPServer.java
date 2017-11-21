@@ -22,7 +22,7 @@ public final class FTPServer {
 			welcomeSocket = new ServerSocket(port);
 		} catch (IOException ioEx) {
 			System.out.println("[FTPServer] Unable to set up port!");
-			System.exit(1);
+			ioEx.printStackTrace();
 		}
 	        
 		System.out.println("[FTPServer] Server running on port: "+port);

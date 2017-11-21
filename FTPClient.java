@@ -51,17 +51,12 @@ public class FTPClient {
                     }
 
 		    // connect to main server
-		    ServerSocket newSocket = new ServerSocket(port+4);
-		    Socket dataConnectionSocket = newSocket.accept();
-		    ObjectOutputStream dataOutToClient = new ObjectOutputStream(dataConnectionSocket.getOutputStream());
-		    dataOutToClient.writeObject(dataFromServer);
+		    FinishConnectionThread createServerSocketThread = new FinishConnectionThread(port+4, dataFromServer);
+		    createServerSocketThread.start();
 		    
 		    welcomeData.close();
 		    dataSocket.close();
 		    inData.close();
-		    newSocket.close();
-		    dataConnectionSocket.close();
-		    dataOutToClient.close();
 
             } else if (input.startsWith("retr")) {
             Socket remoteFTPServerSocket;
@@ -116,5 +111,30 @@ public class FTPClient {
             return "Invalid command";
         }
         return null;
+    }
+}
+
+class FinishConnectionThread extends Thread {
+    private int port;
+    private ArrayList<String> dataFromServer;
+
+    public FinishConnectionThread(int port, ArrayList<String> dataFromServer) {
+        this.port = port;
+	this.dataFromServer = dataFromServer;
+    }
+
+    public void run() {
+        try {
+            ServerSocket newSocket = new ServerSocket(port);
+	    Socket dataConnectionSocket = newSocket.accept();
+	    ObjectOutputStream dataOutToClient = new ObjectOutputStream(dataConnectionSocket.getOutputStream());
+	    dataOutToClient.writeObject(dataFromServer);
+		    
+	    newSocket.close();
+	    dataConnectionSocket.close();
+	    dataOutToClient.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

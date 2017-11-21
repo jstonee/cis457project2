@@ -52,8 +52,8 @@ public class HostGUIFunctions {
 	    setupFTPClient(hostname,(port+2)+"");
 
 	    // send file list
-	    toServer.writeBytes("list "+(port+6)+'\n');
 	    enterCommand("list:", null);
+	    toServer.writeBytes("list "+(port+6)+'\n');
 	    
         } catch(Exception e) {
 	    e.printStackTrace();
