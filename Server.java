@@ -78,6 +78,8 @@ class HostHandler extends Thread {
 
 			    try {
 				/* establish data connection */
+				System.out.println(clientSocket.getInetAddress());
+				System.out.println(dataConnPort);
 				Socket dataSocket = new Socket(clientSocket.getInetAddress(), dataConnPort);
 				ObjectInputStream inputStream = new ObjectInputStream(dataSocket.getInputStream());
 				ArrayList<String> fileList;
@@ -93,11 +95,13 @@ class HostHandler extends Thread {
 				    System.out.println("Could not fetch files.");
 				}
 
+				inputStream.close();
 				dataSocket.close();
 			    } catch (Exception e) {
 				System.out.println(e.getMessage());
 				output.println(e.getMessage());
 				Server.userTable.removeUser(username);
+				e.printStackTrace();
 				System.out.println("Failed to establish data connection.");
 			    }
 			}

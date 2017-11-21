@@ -57,6 +57,7 @@ public class FTPClient {
 		    dataOutToClient.writeObject(dataFromServer);
 		    
 		    welcomeData.close();
+		    dataSocket.close();
 		    inData.close();
 		    newSocket.close();
 		    dataConnectionSocket.close();
