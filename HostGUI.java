@@ -86,6 +86,7 @@ public class HostGUI extends JPanel {
         goButton.setPreferredSize(new Dimension(50,20));
         tablePane.setPreferredSize(new Dimension(700, 150));
         outputArea.setEditable(false);
+        speedField.setBackground(Color.WHITE);
 
         // set JPanel layout
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));

@@ -10,7 +10,18 @@ public class HostGUIFunctions {
 
     public HostGUIFunctions(){}
 
+    /**
+     * Connect to the server with the given parameters
+     */
     public boolean connect(String server, String portString, String username, String hostname, String itype) {
+        // make user data isnt empty
+        if(server == null || server.isEmpty() ||
+                portString == null || portString.isEmpty() ||
+                username == null || username.isEmpty() ||
+                hostname == null || hostname.isEmpty() ||
+                itype == null || itype.isEmpty()) {
+            return false;
+        }
         int port;
         try {
             port = Integer.parseInt(portString);
@@ -23,6 +34,7 @@ public class HostGUIFunctions {
 //        itype = "T1";
 //        port = 5568;
 
+        // Connect
         try {
             ControlSocket = new Socket(server, port);
         } catch(IOException ioEx) {
@@ -30,6 +42,7 @@ public class HostGUIFunctions {
             return false;
         }
 
+        // Send info to server
         BufferedReader inFromUser = new BufferedReader(new InputStreamReader(System.in));
         try {
             DataOutputStream toServer = new DataOutputStream(ControlSocket.getOutputStream());
@@ -44,8 +57,4 @@ public class HostGUIFunctions {
         }
         return true;
     }
-
-    /**
-     *
-     */
 }
