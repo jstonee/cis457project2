@@ -1,6 +1,7 @@
 import java.io.*;
 import java.net.*;
 import java.lang.*;
+import java.util.ArrayList;
 
 /**
  * Created by mitchcout on 11/20/2017.
@@ -8,6 +9,7 @@ import java.lang.*;
 public class HostGUIFunctions {
     private static Socket ControlSocket;
     private DataOutputStream toServer;
+    int port;
 
     private static FTPServer ftpServer;
     private static FTPClient ftpClient;
@@ -19,24 +21,18 @@ public class HostGUIFunctions {
      */
     public boolean connect(String server, String portString, String username, String hostname, String itype) {
         // make sure user data isnt empty
-	//        if(server == null || server.isEmpty() ||
-	//      portString == null || portString.isEmpty() ||
-	//      username == null || username.isEmpty() ||
-	//      hostname == null || hostname.isEmpty() ||
-	//      itype == null || itype.isEmpty()) {
-	//  return false;
-        //}
-        int port;
+	if(server == null || server.isEmpty() ||
+	      portString == null || portString.isEmpty() ||
+	      username == null || username.isEmpty() ||
+	      hostname == null || hostname.isEmpty() ||
+	      itype == null || itype.isEmpty()) {
+	  return false;
+        }
         try {
             port = Integer.parseInt(portString);
         } catch (Exception e) {
             return false;
         }
-        server = "127.0.0.1";
-        username = "couturmi";
-        hostname = "127.0.0.1";
-        itype = "T1";
-        port = 5568;
 
         // Connect
         try {
@@ -50,19 +46,37 @@ public class HostGUIFunctions {
         try {
             toServer = new DataOutputStream(ControlSocket.getOutputStream());
             toServer.writeBytes("info" + " " + username + " " + hostname + " " + itype + '\n');
+
+	    // start FTP Server and Client
+	    setupFTPServer((port+2)+"");
+	    setupFTPClient(hostname,(port+2)+"");
+
+	    // send file list
+	    toServer.writeBytes("list "+(port+6)+'\n');
+	    enterCommand("list:", null);
+	    
         } catch(Exception e) {
+	    e.printStackTrace();
             return false;
         }
-
-        // start FTP Server and Client
-        setupFTPServer((port+2)+"");
-        setupFTPClient(hostname,(port+2)+"");
+        
         return true;
     }
 
-    public boolean search(String keyword) {
-
-        return true;
+    public ArrayList<ArrayList<String>> search(String keyword) {
+	ArrayList<ArrayList<String>> results = null;
+	try {
+	    toServer.writeBytes("search "+(port+4)+" "+keyword+'\n');
+	    ServerSocket newSocket = new ServerSocket(port+4);
+	    Socket dataConnectionSocket = newSocket.accept();
+	    ObjectInputStream objectInputStream = new ObjectInputStream(dataConnectionSocket.getInputStream());
+	    results = (ArrayList<ArrayList<String>>) objectInputStream.readObject();
+	    newSocket.close();
+	    dataConnectionSocket.close();
+	} catch (Exception e) {
+	    return null;
+	}
+        return results;
     }
 
     /**
@@ -71,15 +85,16 @@ public class HostGUIFunctions {
      * @return
      */
     public String enterCommand(String command, String[] args) {
-        String response;
-        try {
-            response = FTPClient.runCommand(command, args);
-        } catch (Exception e) {
-            return "Error";
-        }
-        if(response.equals("close")){
+        String response = null;
+	try {
+	    response = FTPClient.runCommand(command, args);
+	} catch (Exception e) {
+	    e.printStackTrace();
+	    return "Error";
+	}
+        if(response != null && response.equals("close")){
             try {
-                toServer.writeBytes("close");
+                toServer.writeBytes("close\n");
 		toServer.flush();
                 toServer.close();
                 ControlSocket.close();

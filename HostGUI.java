@@ -1,8 +1,10 @@
 import javax.swing.*;
+import javax.swing.table.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.StringTokenizer;
+import java.util.ArrayList;
 
 /**
  * Created by mitchcout on 11/20/2017.
@@ -31,12 +33,17 @@ public class HostGUI extends JPanel {
 
     private Object[][] searchResults;
 
+    private String[] tableColumns;
+
+    private ArrayList<ArrayList<String>> returnedResults;
+
     public HostGUI() {
         // init data
         host = new HostGUIFunctions();
         String[] speedOptions = {"Ethernet", "Modem", "T1", "T3"};
-        String[] tableColumns = {"Speed", "Hostname", "Filename"};
+        tableColumns = new String[]{"Speed", "Hostname", "Filename"};
         searchResults = new Object[][]{};
+	returnedResults = new ArrayList<>();
 
         // set section headers
         String sectionHeader1 = "Connection";
@@ -83,8 +90,8 @@ public class HostGUI extends JPanel {
 
         // view adjustments
         connectButton.setPreferredSize(new Dimension(150,20));
-        searchButton.setPreferredSize(new Dimension(75,20));
-        goButton.setPreferredSize(new Dimension(50,20));
+        searchButton.setPreferredSize(new Dimension(90,20));
+        goButton.setPreferredSize(new Dimension(60,20));
         tablePane.setPreferredSize(new Dimension(700, 150));
         outputArea.setEditable(false);
         speedField.setBackground(Color.WHITE);
@@ -158,14 +165,29 @@ public class HostGUI extends JPanel {
                     outputArea.append("Could not connect. Check parameters and try again."+"\n");
                 }
             } else if(e.getSource() == searchButton){
-                boolean success = host.search(keywordField.getText());
+                ArrayList<ArrayList<String>> results  = host.search(keywordField.getText());
+		returnedResults = results;
+		DefaultTableModel model = new DefaultTableModel();
+		model.setColumnIdentifiers(tableColumns);
+		for(ArrayList<String> object : results) {
+		    String[] tempArray = {object.get(3), object.get(2), object.get(0)};
+		    model.addRow(tempArray);
+		}
+		searchTable.setModel(model);
+		
             } else if(e.getSource() == goButton){
                 // get command data
                 String command = commandField.getText();
                 String[] args = null;
                 StringTokenizer tokens= new StringTokenizer(command);
                 if(tokens.nextToken().equals("retr")){
-                    args = new String[]{};
+		    String filename = tokens.nextToken();
+		    args = new String[]{};
+		    for(ArrayList<String> object : returnedResults) {
+			if(object.get(0).equals(filename)){
+			    args = new String[]{object.get(2)};
+			}
+		    }
                 }
 
                 // execute command
@@ -173,7 +195,7 @@ public class HostGUI extends JPanel {
                 String response = host.enterCommand(command, args);
 
                 // handle response
-                if(response.equals("close")) {
+                if(response != null && response.equals("close")) {
                     outputArea.append("Disconnected from server"+"\n");
                     connectButton.setEnabled(true);
                     connectButton.setText("Connect");

@@ -10,9 +10,9 @@ public final class FTPServer {
     public static void main(String argv[]) throws Exception {
     	// get port number
 		try {
-			port = Integer.parseInt(argv[0]);
+		    port = Integer.parseInt(argv[0]);
 		} catch (Exception e) {
-			return;
+		    return;
 		}
 
 		try {
@@ -24,13 +24,16 @@ public final class FTPServer {
 			System.out.println("[FTPServer] Unable to set up port!");
 			System.exit(1);
 		}
+	        
 		System.out.println("[FTPServer] Server running on port: "+port);
-		Socket connectionSocket = welcomeSocket.accept();
-		System.out.println("[FTPServer] Connected to " + connectionSocket.getRemoteSocketAddress().toString());
+		while(true) {
+		    Socket connectionSocket = welcomeSocket.accept();
+		    System.out.println("[FTPServer] Connected to " + connectionSocket.getRemoteSocketAddress().toString());
 
-		// Create ClientHandler thread to handle client
-		ClientHandler handler = new ClientHandler(connectionSocket);
-		handler.start();
+		    // Create ClientHandler thread to handle client
+		    ClientHandler handler = new ClientHandler(connectionSocket);
+		    handler.start();
+		}
 	}
 }
 
@@ -62,7 +65,6 @@ class ClientHandler extends Thread {
 		do {
 			// read in initial command line from client
 			fromClient = input.nextLine();
-
 			StringTokenizer tokens = new StringTokenizer(fromClient);
 
 			frstln = tokens.nextToken();
@@ -76,7 +78,28 @@ class ClientHandler extends Thread {
 			}
 
 			try {
-			    if(clientCommand.equals("retr")) {
+			    if (clientCommand.equals("list:")) {
+				// connect to client's Data Socket
+				Socket dataSocket = new Socket(clientSocket.getInetAddress(), port);
+				DataOutputStream dataOutToClient = new DataOutputStream(dataSocket.getOutputStream());
+				System.out.println("[List] Opened data socket on port: " + port);
+				// get local files
+				File folder = new File(".");
+				File[] listOfFiles = folder.listFiles();
+				String temp;
+				// get data for each file
+				for (int i = 0; i < listOfFiles.length; i++) {
+				    if (listOfFiles[i].isFile()) {
+					temp = listOfFiles[i].getName() + '\n';
+					data = temp.getBytes();
+					dataOutToClient.write(data, 0, data.length);
+				    }
+				}
+				dataOutToClient.close();
+				dataSocket.close();
+				System.out.println("[List] Closed data socket on port: " + port);
+			    }
+			    else if(clientCommand.equals("retr")) {
 					clientCommand = tokens.nextToken();
 					Socket dataSocket = new Socket(clientSocket.getInetAddress(), port);
 					DataOutputStream dataOutToClient = new DataOutputStream(dataSocket.getOutputStream());
@@ -95,12 +118,13 @@ class ClientHandler extends Thread {
 						dataOutToClient.close();
 						dataSocket.close();
 						System.out.println("[FTPServer] [Retr] Closed data socket on port: " + port);
+						endConnection();
 					}
 			    }
 			} catch (IOException ex) {
 			    ex.printStackTrace();
 			}
-		} while (true);
+		} while (!Thread.currentThread().isInterrupted());
 	}
     
     /**
@@ -115,5 +139,6 @@ class ClientHandler extends Thread {
 	    System.out.println("[FTPServer] Unable to disconnect!");
 	}
 	System.out.println("[FTPServer] [Quit] Disconnected from client");
+        interrupt();
     }
 }
