@@ -87,6 +87,8 @@ public class HostGUI extends JPanel {
         tablePane.setPreferredSize(new Dimension(700, 150));
         outputArea.setEditable(false);
         speedField.setBackground(Color.WHITE);
+        goButton.setEnabled(false);
+        searchButton.setEnabled(false);
 
         // set JPanel layout
         setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
@@ -136,26 +138,43 @@ public class HostGUI extends JPanel {
     private class ButtonListener implements ActionListener {
         public void actionPerformed(ActionEvent e) {
             if(e.getSource() == connectButton){
-                outputArea.setText(outputArea.getText() + ">> Connect "+serverHostnameField.getText()+" "+portField.getText()+"\n");
+                outputArea.append(">> Connect "+serverHostnameField.getText()+" "+portField.getText()+"\n");
                 boolean connected = host.connect(serverHostnameField.getText(), portField.getText(),
                                                 usernameField.getText(), hostnameField.getText(),
                                                 (String) speedField.getSelectedItem());
                 if(connected){
-                    outputArea.setText(outputArea.getText() + "Connected to "+serverHostnameField.getText()+":"+portField.getText()+"\n");
+                    outputArea.append("Connected to "+serverHostnameField.getText()+":"+portField.getText()+"\n");
                     connectButton.setEnabled(false);
                     connectButton.setText("Connected");
+                    goButton.setEnabled(true);
+                    searchButton.setEnabled(true);
                     serverHostnameField.setEnabled(false);
                     portField.setEnabled(false);
                     usernameField.setEnabled(false);
                     hostnameField.setEnabled(false);
                     speedField.setEnabled(false);
                 } else {
-                    outputArea.setText(outputArea.getText() + "Could not connect. Check parameters and try again."+"\n");
+                    outputArea.append("Could not connect. Check parameters and try again."+"\n");
                 }
             } else if(e.getSource() == searchButton){
-
+                boolean success = host.search(keywordField.getText());
             } else if(e.getSource() == goButton){
-
+                outputArea.append(">> "+commandField.getText()+"\n");
+                String response = host.enterCommand(commandField.getText());
+                if(response.equals("close")) {
+                    outputArea.append("Disconnected from server"+"\n");
+                    connectButton.setEnabled(true);
+                    connectButton.setText("Connect");
+                    goButton.setEnabled(false);
+                    searchButton.setEnabled(false);
+                    serverHostnameField.setEnabled(true);
+                    portField.setEnabled(true);
+                    usernameField.setEnabled(true);
+                    hostnameField.setEnabled(true);
+                    speedField.setEnabled(true);
+                } else if(response != null) {
+                    outputArea.append(response+"\n");
+                }
             }
         }
     }

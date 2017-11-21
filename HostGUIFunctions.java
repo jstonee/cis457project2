@@ -7,6 +7,10 @@ import java.lang.*;
  */
 public class HostGUIFunctions {
     private static Socket ControlSocket;
+    private DataOutputStream toServer;
+
+    private static FTPServer ftpServer;
+    private static FTPClient ftpClient;
 
     public HostGUIFunctions(){}
 
@@ -43,15 +47,9 @@ public class HostGUIFunctions {
         }
 
         // Send info to server
-        BufferedReader inFromUser = new BufferedReader(new InputStreamReader(System.in));
         try {
-            DataOutputStream toServer = new DataOutputStream(ControlSocket.getOutputStream());
+            toServer = new DataOutputStream(ControlSocket.getOutputStream());
             toServer.writeBytes("info" + " " + username + " " + hostname + " " + itype + '\n');
-//            System.out.print(">> ");
-//            String input = inFromUser.readLine();
-//            toServer.writeBytes("close");
-//            ControlSocket.close();
-//            System.exit(0);
         } catch(Exception e) {
             return false;
         }
@@ -67,24 +65,58 @@ public class HostGUIFunctions {
         return true;
     }
 
-    public boolean enterCommand(String command) {
-
-        return true;
+    /**
+     * Runs a command on the FTPClient
+     * @param command
+     * @return
+     */
+    public String enterCommand(String command) {
+        String response;
+        try {
+            response = FTPClient.runCommand(command);
+        } catch (Exception e) {
+            return "Error";
+        }
+        if(response.equals("close")){
+            try {
+                toServer.writeBytes("close");
+                toServer.close();
+                ControlSocket.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        return response;
     }
 
+    /**
+     * Sets up the FTPServer
+     * @param port
+     */
     private void setupFTPServer(String port) {
         String[] args = {port};
         ServerThread newThread = new ServerThread(args);
         newThread.start();
     }
 
+    /**
+     * Sets up the FTPClient
+     * @param IPAddress
+     * @param port
+     */
     private void setupFTPClient(String IPAddress, String port) {
         String[] args = {IPAddress, port};
-        ClientThread newThread = new ClientThread(args);
-        newThread.start();
+        try {
+            FTPClient.main(args);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }
 
+/**
+ * The thread that runs the server
+ */
 class ServerThread extends Thread {
 
     private String[] args;
@@ -96,23 +128,6 @@ class ServerThread extends Thread {
     public void run() {
         try {
             FTPServer.main(args);
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-}
-
-class ClientThread extends Thread {
-
-    private String[] args;
-
-    public ClientThread(String[] args) {
-        this.args = args;
-    }
-
-    public void run() {
-        try {
-            FTPClient.main(args);
         } catch (Exception e) {
             e.printStackTrace();
         }
