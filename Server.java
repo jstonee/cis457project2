@@ -45,7 +45,7 @@ class HostHandler extends Thread {
 	}
 
 	public void run() {
-	tring fromClient;
+	String fromClient;
 		String command;
 		do {
 			fromClient = input.nextLine();
