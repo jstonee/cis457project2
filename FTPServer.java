@@ -5,10 +5,10 @@ import java.util.*;
 public final class FTPServer {
 
     private static ServerSocket welcomeSocket;
+    private static int port;
 
     public static void main(String argv[]) throws Exception {
     	// get port number
-		int port;
 		try {
 			port = Integer.parseInt(argv[0]);
 		} catch (Exception e) {
@@ -76,64 +76,26 @@ class ClientHandler extends Thread {
 			}
 
 			try {
-			    if (clientCommand.equals("list:")) {
-				// connect to client's Data Socket
-				Socket dataSocket = new Socket(clientSocket.getInetAddress(), port);
-				DataOutputStream dataOutToClient = new DataOutputStream(dataSocket.getOutputStream());
-				System.out.println("[FTPServer] [List] Opened data socket on port: " + port);
-				// get local files
-				File folder = new File(".");
-				File[] listOfFiles = folder.listFiles();
-				String temp;
-				// get data for each file
-				for (int i = 0; i < listOfFiles.length; i++) {
-				    if (listOfFiles[i].isFile()) {
-					temp = listOfFiles[i].getName() + '\n';
-					data = temp.getBytes();
-					dataOutToClient.write(data, 0, data.length);
-				    }
-				}
-				dataOutToClient.close();
-				dataSocket.close();
-				System.out.println("[FTPServer] [List] Closed data socket on port: " + port);
-			    }
-			    else if(clientCommand.equals("retr")) {
-				clientCommand = tokens.nextToken();
-				Socket dataSocket = new Socket(clientSocket.getInetAddress(), port);
-				DataOutputStream dataOutToClient = new DataOutputStream(dataSocket.getOutputStream());
-				
-				System.out.println("[FTPServer] [Retr] Opened data socket on port: " + port);
-				File openFile = new File(clientCommand);
-				if (openFile.exists()) {
-				    byte[] buffer = new byte[8192];
-				    BufferedInputStream in = new BufferedInputStream(new FileInputStream(clientCommand));
-				    int count;
-				    while((count = in.read(buffer)) > 0) {
-					dataOutToClient.write(buffer, 0, count);
-				    }
-				    
-				    in.close();
-				    dataOutToClient.close();
-				    dataSocket.close();
-				    System.out.println("[FTPServer] [Retr] Closed data socket on port: " + port);
-				}
-			    }
-			    else if(clientCommand.equals("stor")) {
-				clientCommand = tokens.nextToken();
-				Socket dataSocket = new Socket(clientSocket.getInetAddress(), port);
-				BufferedInputStream dataFromClient = new BufferedInputStream(new DataInputStream(dataSocket.getInputStream()));
-				
-				System.out.println("[FTPServer] [Stor] Opened data socket on port: " + port);
-				FileOutputStream file = new FileOutputStream(new File(clientCommand));
-				byte[] buffer = new byte[8192];
-				int count;
-				while((count = dataFromClient.read(buffer)) > 0) {
-				    file.write(buffer, 0, count);
-				}
-				file.close();
-				dataFromClient.close();
-				dataSocket.close();
-				System.out.println("[FTPServer] [Stor] Closed data socket on port: " + port);
+			    if(clientCommand.equals("retr")) {
+					clientCommand = tokens.nextToken();
+					Socket dataSocket = new Socket(clientSocket.getInetAddress(), port);
+					DataOutputStream dataOutToClient = new DataOutputStream(dataSocket.getOutputStream());
+
+					System.out.println("[FTPServer] [Retr] Opened data socket on port: " + port);
+					File openFile = new File(clientCommand);
+					if (openFile.exists()) {
+						byte[] buffer = new byte[8192];
+						BufferedInputStream in = new BufferedInputStream(new FileInputStream(clientCommand));
+						int count;
+						while((count = in.read(buffer)) > 0) {
+						dataOutToClient.write(buffer, 0, count);
+						}
+
+						in.close();
+						dataOutToClient.close();
+						dataSocket.close();
+						System.out.println("[FTPServer] [Retr] Closed data socket on port: " + port);
+					}
 			    }
 			} catch (IOException ex) {
 			    ex.printStackTrace();

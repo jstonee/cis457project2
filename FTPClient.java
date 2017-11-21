@@ -33,25 +33,7 @@ public class FTPClient {
         DataOutputStream toServer = new DataOutputStream(ControlSocket.getOutputStream());
         DataInputStream fromServer = new DataInputStream(new BufferedInputStream(ControlSocket.getInputStream()));
 
-        if (input.equals("list:")) {
-            int port1 = port + 2;
-            ServerSocket welcomeData = new ServerSocket(port1);
-            toServer.writeBytes(port1 + " " + input + " " + '\n');
-
-            Socket dataSocket = welcomeData.accept();
-            System.out.println("\n[FTPClient] The files on this server are:");
-            BufferedReader inData = new BufferedReader(new InputStreamReader(new BufferedInputStream(dataSocket.getInputStream())));
-
-            String dataFromServer = inData.readLine();
-            while(dataFromServer != null) {
-                System.out.println(dataFromServer);
-                dataFromServer = inData.readLine();
-            }
-            inData.close();
-            dataSocket.close();
-            welcomeData.close();
-
-        } else if (input.startsWith("retr")) {
+        if (input.startsWith("retr")) {
             tokens = new StringTokenizer(input);
             String file = tokens.nextToken();
             file = tokens.nextToken();
@@ -75,33 +57,6 @@ public class FTPClient {
             inData.close();
             dataSocket.close();
             welcomeData.close();
-
-        } else if (input.startsWith("stor")) {
-            tokens = new StringTokenizer(input);
-            String file = tokens.nextToken();
-            file = tokens.nextToken();
-            File openFile = new File(file);
-            if(openFile.exists()) {
-                System.out.println("[FTPClient] Storing " + file + " to server");
-                byte[] buffer = new byte[8192];
-                int port1 = port + 2;
-                ServerSocket welcomeData = new ServerSocket(port1);
-                toServer.writeBytes(port1 + " " + input + " " + '\n');
-                Socket dataSocket = welcomeData.accept();
-                System.out.println("[FTPClient] Data socket open, sending file now");
-                DataOutputStream sendFile = new DataOutputStream(dataSocket.getOutputStream());
-                BufferedInputStream in = new BufferedInputStream(new FileInputStream(file));
-                int count;
-                while((count = in.read(buffer)) > 0) {
-                    sendFile.write(buffer, 0, count);
-                }
-                in.close();
-                sendFile.close();
-                dataSocket.close();
-                welcomeData.close();
-            } else {
-                return "File does not exist.";
-            }
 
         } else if (input.equals("close")) {
             System.out.println("[FTPClient] Closing Control Socket");
