@@ -52,7 +52,7 @@ class HostHandler extends Thread {
 			StringTokenizer tokens = new StringTokenizer(fromClient);
 			command = tokens.nextToken();
 
-			if (command.equals("close")) {
+			if (command.equals("close") || command.equals("c")) {
 				endConnection();
 				return;
 			}
