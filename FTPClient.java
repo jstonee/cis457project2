@@ -6,15 +6,16 @@ import java.lang.*;
 
 public class FTPClient {
     private static Socket ControlSocket;
+    private static int port;
+    private static DataOutputStream toServer;
+
+    private static StringTokenizer tokens;
 
     public static void main(String argv[]) throws Exception {
-        String input;
         BufferedReader inFromUser = new BufferedReader(new InputStreamReader(System.in));
-        StringTokenizer tokens;
 
         // Get params
         String serverName = argv[0]; // serverIP
-        int port;
         try {
             port = Integer.parseInt(argv[1]); // port
         } catch (Exception e) {
@@ -27,94 +28,66 @@ public class FTPClient {
             System.out.println("[FTPClient] Unable to connect to " + serverName + ":" + port);
             System.exit(1);
         }
+    }
 
-        // command handling
-        while (true) {
-            DataOutputStream toServer = new DataOutputStream(ControlSocket.getOutputStream());
-            DataInputStream fromServer = new DataInputStream(new BufferedInputStream(ControlSocket.getInputStream()));
-            System.out.print("\nFTPClient >> ");
-            input = inFromUser.readLine();
+    public static String runCommand(String input, String args[]) throws Exception {
+        toServer = new DataOutputStream(ControlSocket.getOutputStream());
 
-            if (input.equals("list:")) {
-                int port1 = port + 2;
-                ServerSocket welcomeData = new ServerSocket(port1);
-                toServer.writeBytes(port1 + " " + input + " " + '\n');
-
-                Socket dataSocket = welcomeData.accept();
-                System.out.println("\nThe files on this server are:");
-                BufferedReader inData = new BufferedReader(new InputStreamReader(new BufferedInputStream(dataSocket.getInputStream())));
-
-                String dataFromServer = inData.readLine();
-                while(dataFromServer != null) {
-                    System.out.println(dataFromServer);
-                    dataFromServer = inData.readLine();
-                }
-                inData.close();
-                dataSocket.close();
-                welcomeData.close();
-
-            } else if (input.startsWith("retr")) {
-                tokens = new StringTokenizer(input);
-                String file = tokens.nextToken();
-                file = tokens.nextToken();
-                System.out.println("Requesting " + file + " from server");
-
-                int port1 = port + 2;
-                ServerSocket welcomeData = new ServerSocket(port1);
-                toServer.writeBytes(port1 + " " + input + " " + '\n');
-                Socket dataSocket = welcomeData.accept();
-                System.out.println("Data socket open, retrieving file now");
-
-                BufferedInputStream inData = new BufferedInputStream(new DataInputStream(dataSocket.getInputStream()));
-                FileOutputStream newFile = new FileOutputStream(new File(file));
-                byte[] buffer = new byte[8192];
-                int count;
-                while((count = inData.read(buffer)) > 0) {
-                    newFile.write(buffer, 0, count);
-                }
-
-                newFile.close();
-                inData.close();
-                dataSocket.close();
-                welcomeData.close();
-
-            } else if (input.startsWith("stor")) {
-                tokens = new StringTokenizer(input);
-                String file = tokens.nextToken();
-                file = tokens.nextToken();
-                File openFile = new File(file);
-                if(openFile.exists()) {
-                    System.out.println("Storing " + file + " to server");
-                    byte[] buffer = new byte[8192];
-                    int port1 = port + 2;
-                    ServerSocket welcomeData = new ServerSocket(port1);
-                    toServer.writeBytes(port1 + " " + input + " " + '\n');
-                    Socket dataSocket = welcomeData.accept();
-                    System.out.println("Data socket open, sending file now");
-                    DataOutputStream sendFile = new DataOutputStream(dataSocket.getOutputStream());
-                    BufferedInputStream in = new BufferedInputStream(new FileInputStream(file));
-                    int count;
-                    while((count = in.read(buffer)) > 0) {
-                        sendFile.write(buffer, 0, count);
-                    }
-                    in.close();
-                    sendFile.close();
-                    dataSocket.close();
-                    welcomeData.close();
-                } else {
-                    System.out.println("File does not exist.");
-                }
-
-            } else if (input.equals("close")) {
-                System.out.println("Closing Control Socket");
-                toServer.writeBytes(0 + " " + input + " " + '\n');
-                ControlSocket.close();
-                System.out.println("Exiting");
-                System.exit(0);
-
-            } else {
-                System.out.println("Invalid command");
+        // Establish P2P connection with remote FTP Server and retrieve file
+        if (input.startsWith("retr")) {
+            Socket remoteFTPServerSocket;
+            // Get params for new remote server
+            String remoteServerName = args[0]; // remote ftp server IP
+            int remoteServerPort;
+            try {
+                remoteServerPort = Integer.parseInt(args[1]); // remote ftp server port
+            } catch (Exception e) {
+                return "Error";
             }
+            System.out.println("[FTPClient] Connecting to " + remoteServerName + ":" + remoteServerPort);
+            try {
+                remoteFTPServerSocket = new Socket(remoteServerName, remoteServerPort);
+            } catch (IOException ioEx) {
+                System.out.println("[FTPClient] Unable to connect to " + remoteServerName + ":" + remoteServerPort);
+                return "Error";
+            }
+            DataOutputStream toRemoteServer = new DataOutputStream(remoteFTPServerSocket.getOutputStream());
+
+            tokens = new StringTokenizer(input);
+            tokens.nextToken();
+            String file = tokens.nextToken();
+            System.out.println("[FTPClient] Requesting " + file + " from server");
+
+            int port1 = remoteServerPort + 2;
+            ServerSocket welcomeData = new ServerSocket(port1);
+            toRemoteServer.writeBytes(port1 + " " + input + " " + '\n');
+            Socket dataSocket = welcomeData.accept();
+            System.out.println("[FTPClient] Data socket open, retrieving file now");
+
+            BufferedInputStream inData = new BufferedInputStream(new DataInputStream(dataSocket.getInputStream()));
+            FileOutputStream newFile = new FileOutputStream(new File(file));
+            byte[] buffer = new byte[8192];
+            int count;
+            while((count = inData.read(buffer)) > 0) {
+                newFile.write(buffer, 0, count);
+            }
+
+            newFile.close();
+            inData.close();
+            dataSocket.close();
+            welcomeData.close();
+            remoteFTPServerSocket.close();
+            toRemoteServer.close();
         }
+        // close and send close message to local FTP Server
+        else if (input.equals("close")) {
+            System.out.println("[FTPClient] Closing Control Socket");
+            toServer.writeBytes(0 + " " + input + " " + '\n');
+            ControlSocket.close();
+            return "close";
+        } else {
+            return "Invalid command";
+        }
+        return null;
     }
 }
