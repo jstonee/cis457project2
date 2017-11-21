@@ -18,25 +18,25 @@ public class HostGUIFunctions {
      * Connect to the server with the given parameters
      */
     public boolean connect(String server, String portString, String username, String hostname, String itype) {
-        // make user data isnt empty
-        if(server == null || server.isEmpty() ||
-                portString == null || portString.isEmpty() ||
-                username == null || username.isEmpty() ||
-                hostname == null || hostname.isEmpty() ||
-                itype == null || itype.isEmpty()) {
-            return false;
-        }
+        // make sure user data isnt empty
+	//        if(server == null || server.isEmpty() ||
+	//      portString == null || portString.isEmpty() ||
+	//      username == null || username.isEmpty() ||
+	//      hostname == null || hostname.isEmpty() ||
+	//      itype == null || itype.isEmpty()) {
+	//  return false;
+        //}
         int port;
         try {
             port = Integer.parseInt(portString);
         } catch (Exception e) {
             return false;
         }
-//        server = "127.0.0.1";
-//        username = "jstone";
-//        hostname = "127.0.0.1";
-//        itype = "T1";
-//        port = 5568;
+        server = "127.0.0.1";
+        username = "couturmi";
+        hostname = "127.0.0.1";
+        itype = "T1";
+        port = 5568;
 
         // Connect
         try {
@@ -80,6 +80,7 @@ public class HostGUIFunctions {
         if(response.equals("close")){
             try {
                 toServer.writeBytes("close");
+		toServer.flush();
                 toServer.close();
                 ControlSocket.close();
             } catch (IOException e) {

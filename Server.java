@@ -18,13 +18,13 @@ public final class Server {
 		System.out.println("Server running on port: " + port);
 		while (true) {
 			Socket connectionSocket = welcomeSocket.accept();
-			ClientHandler handler = new ClientHandler(connectionSocket, userTable, fileTable);
+			HostHandler handler = new HostHandler(connectionSocket, userTable, fileTable);
 			handler.start();
 		}
 	}
 }
 
-class ClientHandler extends Thread {
+class HostHandler extends Thread {
 	private PrintWriter output;
 	private UserTable userTable;
 	private FileTable fileTable;
@@ -32,7 +32,7 @@ class ClientHandler extends Thread {
 	private Scanner input;
 	private String username;
 
-	public ClientHandler(Socket socket, UserTable userTable, FileTable fileTable) {
+	public HostHandler(Socket socket, UserTable userTable, FileTable fileTable) {
 		clientSocket = socket;
 		this.userTable = userTable;
 		this.fileTable = fileTable;
@@ -51,22 +51,21 @@ class ClientHandler extends Thread {
 	    fromClient = input.nextLine();
 	    StringTokenizer tokens = new StringTokenizer(fromClient);
 	    command = tokens.nextToken();
-	    
-	    if(command.equals("close")) {
+	    System.out.flush();
+	    if(command.equals("close") || command.equals("c")) {
 	    	endConnection();
 	    	return;
 	    }
-	    
-	    username = tokens.nextToken();
-	    String hostname = tokens.nextToken();
-	    String itype = tokens.nextToken();
+	    else if(command.equals("info")) {
+		username = tokens.nextToken();
+		String hostname = tokens.nextToken();
+		String itype = tokens.nextToken();
 
-	    userTable.addUser(username, hostname, itype);
-	    output.println("Username and respective data added. Transferring files.");
-	    
-	    fromClient = input.nextLine();
-	    tokens = new StringTokenizer(fromClient);
-        command = tokens.nextToken();
+		userTable.addUser(username, hostname, itype);
+		System.out.println(username + " added");
+		output.println("Username and respective data added. Transferring files.");
+		continue;
+	    }
         int dataConnPort;
         
         try {
