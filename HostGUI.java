@@ -2,6 +2,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.StringTokenizer;
 
 /**
  * Created by mitchcout on 11/20/2017.
@@ -159,8 +160,19 @@ public class HostGUI extends JPanel {
             } else if(e.getSource() == searchButton){
                 boolean success = host.search(keywordField.getText());
             } else if(e.getSource() == goButton){
-                outputArea.append(">> "+commandField.getText()+"\n");
-                String response = host.enterCommand(commandField.getText());
+                // get command data
+                String command = commandField.getText();
+                String[] args = null;
+                StringTokenizer tokens= new StringTokenizer(command);
+                if(tokens.nextToken().equals("retr")){
+                    args = new String[]{};
+                }
+
+                // execute command
+                outputArea.append(">> "+command+"\n");
+                String response = host.enterCommand(command, args);
+
+                // handle response
                 if(response.equals("close")) {
                     outputArea.append("Disconnected from server"+"\n");
                     connectButton.setEnabled(true);

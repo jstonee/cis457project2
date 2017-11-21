@@ -70,10 +70,10 @@ public class HostGUIFunctions {
      * @param command
      * @return
      */
-    public String enterCommand(String command) {
+    public String enterCommand(String command, String[] args) {
         String response;
         try {
-            response = FTPClient.runCommand(command);
+            response = FTPClient.runCommand(command, args);
         } catch (Exception e) {
             return "Error";
         }

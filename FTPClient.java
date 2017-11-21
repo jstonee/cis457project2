@@ -7,6 +7,7 @@ import java.lang.*;
 public class FTPClient {
     private static Socket ControlSocket;
     private static int port;
+    private static DataOutputStream toServer;
 
     private static StringTokenizer tokens;
 
@@ -29,19 +30,37 @@ public class FTPClient {
         }
     }
 
-    public static String runCommand(String input) throws Exception {
-        DataOutputStream toServer = new DataOutputStream(ControlSocket.getOutputStream());
-        DataInputStream fromServer = new DataInputStream(new BufferedInputStream(ControlSocket.getInputStream()));
+    public static String runCommand(String input, String args[]) throws Exception {
+        toServer = new DataOutputStream(ControlSocket.getOutputStream());
 
+        // Establish P2P connection with remote FTP Server and retrieve file
         if (input.startsWith("retr")) {
+            Socket remoteFTPServerSocket;
+            // Get params for new remote server
+            String remoteServerName = args[0]; // remote ftp server IP
+            int remoteServerPort;
+            try {
+                remoteServerPort = Integer.parseInt(args[1]); // remote ftp server port
+            } catch (Exception e) {
+                return "Error";
+            }
+            System.out.println("[FTPClient] Connecting to " + remoteServerName + ":" + remoteServerPort);
+            try {
+                remoteFTPServerSocket = new Socket(remoteServerName, remoteServerPort);
+            } catch (IOException ioEx) {
+                System.out.println("[FTPClient] Unable to connect to " + remoteServerName + ":" + remoteServerPort);
+                return "Error";
+            }
+            DataOutputStream toRemoteServer = new DataOutputStream(remoteFTPServerSocket.getOutputStream());
+
             tokens = new StringTokenizer(input);
+            tokens.nextToken();
             String file = tokens.nextToken();
-            file = tokens.nextToken();
             System.out.println("[FTPClient] Requesting " + file + " from server");
 
-            int port1 = port + 2;
+            int port1 = remoteServerPort + 2;
             ServerSocket welcomeData = new ServerSocket(port1);
-            toServer.writeBytes(port1 + " " + input + " " + '\n');
+            toRemoteServer.writeBytes(port1 + " " + input + " " + '\n');
             Socket dataSocket = welcomeData.accept();
             System.out.println("[FTPClient] Data socket open, retrieving file now");
 
@@ -57,8 +76,11 @@ public class FTPClient {
             inData.close();
             dataSocket.close();
             welcomeData.close();
-
-        } else if (input.equals("close")) {
+            remoteFTPServerSocket.close();
+            toRemoteServer.close();
+        }
+        // close and send close message to local FTP Server
+        else if (input.equals("close")) {
             System.out.println("[FTPClient] Closing Control Socket");
             toServer.writeBytes(0 + " " + input + " " + '\n');
             ControlSocket.close();
@@ -67,9 +89,5 @@ public class FTPClient {
             return "Invalid command";
         }
         return null;
-    }
-
-    public static void exitClient() {
-        System.exit(0);
     }
 }
