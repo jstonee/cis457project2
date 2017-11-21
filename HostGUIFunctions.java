@@ -55,6 +55,66 @@ public class HostGUIFunctions {
         } catch(Exception e) {
             return false;
         }
+
+        // start FTP Server and Client
+        setupFTPServer((port+2)+"");
+        setupFTPClient(hostname,(port+2)+"");
         return true;
+    }
+
+    public boolean search(String keyword) {
+
+        return true;
+    }
+
+    public boolean enterCommand(String command) {
+
+        return true;
+    }
+
+    private void setupFTPServer(String port) {
+        String[] args = {port};
+        ServerThread newThread = new ServerThread(args);
+        newThread.start();
+    }
+
+    private void setupFTPClient(String IPAddress, String port) {
+        String[] args = {IPAddress, port};
+        ClientThread newThread = new ClientThread(args);
+        newThread.start();
+    }
+}
+
+class ServerThread extends Thread {
+
+    private String[] args;
+
+    public ServerThread(String[] args) {
+        this.args = args;
+    }
+
+    public void run() {
+        try {
+            FTPServer.main(args);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+}
+
+class ClientThread extends Thread {
+
+    private String[] args;
+
+    public ClientThread(String[] args) {
+        this.args = args;
+    }
+
+    public void run() {
+        try {
+            FTPClient.main(args);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

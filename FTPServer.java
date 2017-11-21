@@ -7,21 +7,27 @@ public final class FTPServer {
     private static ServerSocket welcomeSocket;
 
     public static void main(String argv[]) throws Exception {
+    	// get port number
+		int port;
 		try {
-			welcomeSocket = new ServerSocket(5568);
+			port = Integer.parseInt(argv[0]);
+		} catch (Exception e) {
+			return;
+		}
+
+		try {
+			welcomeSocket = new ServerSocket(port);
 		} catch (IOException ioEx) {
-			System.out.println("Unable to set up port!");
+			System.out.println("[FTPServer] Unable to set up port!");
 			System.exit(1);
 		}
-		System.out.println("[FTPServer] Server running on port: 5568");
-		while (true) {
-			Socket connectionSocket = welcomeSocket.accept();
-			System.out.println("[Client] Connected to " + connectionSocket.getRemoteSocketAddress().toString());
+		System.out.println("[FTPServer] Server running on port: "+port);
+		Socket connectionSocket = welcomeSocket.accept();
+		System.out.println("[FTPServer] Connected to " + connectionSocket.getRemoteSocketAddress().toString());
 
-			// Create ClientHandler thread to handle client
-			ClientHandler handler = new ClientHandler(connectionSocket);
-			handler.start();
-		}
+		// Create ClientHandler thread to handle client
+		ClientHandler handler = new ClientHandler(connectionSocket);
+		handler.start();
 	}
 }
 

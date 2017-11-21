@@ -136,7 +136,7 @@ public class HostGUI extends JPanel {
     private class ButtonListener implements ActionListener {
         public void actionPerformed(ActionEvent e) {
             if(e.getSource() == connectButton){
-                outputArea.setText(outputArea.getText() + ">> connect "+serverHostnameField.getText()+" "+portField.getText()+"\n");
+                outputArea.setText(outputArea.getText() + ">> Connect "+serverHostnameField.getText()+" "+portField.getText()+"\n");
                 boolean connected = host.connect(serverHostnameField.getText(), portField.getText(),
                                                 usernameField.getText(), hostnameField.getText(),
                                                 (String) speedField.getSelectedItem());
