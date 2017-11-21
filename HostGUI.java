@@ -136,10 +136,12 @@ public class HostGUI extends JPanel {
     private class ButtonListener implements ActionListener {
         public void actionPerformed(ActionEvent e) {
             if(e.getSource() == connectButton){
+                outputArea.setText(outputArea.getText() + ">> connect "+serverHostnameField.getText()+" "+portField.getText()+"\n");
                 boolean connected = host.connect(serverHostnameField.getText(), portField.getText(),
                                                 usernameField.getText(), hostnameField.getText(),
                                                 (String) speedField.getSelectedItem());
                 if(connected){
+                    outputArea.setText(outputArea.getText() + "Connected to "+serverHostnameField.getText()+":"+portField.getText()+"\n");
                     connectButton.setEnabled(false);
                     connectButton.setText("Connected");
                     serverHostnameField.setEnabled(false);
@@ -147,6 +149,8 @@ public class HostGUI extends JPanel {
                     usernameField.setEnabled(false);
                     hostnameField.setEnabled(false);
                     speedField.setEnabled(false);
+                } else {
+                    outputArea.setText(outputArea.getText() + "Could not connect. Check parameters and try again."+"\n");
                 }
             } else if(e.getSource() == searchButton){
 
